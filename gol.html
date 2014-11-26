@@ -165,7 +165,11 @@
                     var context = $canvas[0].getContext("2d");
 
                     context.beginPath();
-                    context.arc((changedCell.x + 0.5) * options.cellSize, (changedCell.y + 0.5) * options.cellSize, options.cellSize / 2 - (changedCell.isAlive ? 1 : 0), 0, Math.PI * 2, true);
+                    if (changedCell.isAlive) {
+	                    context.arc((changedCell.x + 0.5) * options.cellSize, (changedCell.y + 0.5) * options.cellSize, options.cellSize / 2 - (changedCell.isAlive ? 1 : 0), 0, Math.PI * 2, true);
+	                } else {
+	                    context.rect(changedCell.x * options.cellSize, changedCell.y * options.cellSize, options.cellSize, options.cellSize);
+	                }
                     context.fillStyle = changedCell.isAlive ? 'blue' : '#F0F0FF';
                     context.fill();
                 }
