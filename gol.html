@@ -188,11 +188,14 @@
 
                     aliveNeighbourCount[cell.name] = aliveNeighbourCount[cell.name] || { x: cell.x, y: cell.y, count: 0 };
                     if (cell.isAlive) {
-                        for (var col = cell.x + (cell.x - 1 < 0 ? 0 : -1); col <= cell.x + 1 && col <= cols; col++) {
-                            for (var row = cell.y + (cell.y - 1 < 0 ? 0 : -1); row <= cell.y + 1 && row <= rows; row++) {
+                        for (var col = cell.x - 1; col <= cell.x + 1; col++) {
+                            for (var row = cell.y - 1; row <= cell.y + 1; row++) {
                                 if (cell.x != col || cell.y != row) {
-                                    aliveNeighbourCount['x' + col + 'y' + row] = aliveNeighbourCount['x' + col + 'y' + row] || { x: col, y: row, count: 0 };
-                                    aliveNeighbourCount['x' + col + 'y' + row].count++;
+                                	var x = (col + cols) % cols;
+                                	var y = (row + rows) % rows;
+
+                                    aliveNeighbourCount['x' + x + 'y' + y] = aliveNeighbourCount['x' + x + 'y' + y] || { x: x, y: y, count: 0 };
+                                    aliveNeighbourCount['x' + x + 'y' + y].count++;
                                 }
                             }
                         }
