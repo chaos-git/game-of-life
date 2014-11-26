@@ -6,56 +6,125 @@
 
         <style>
             input[type=text] { width: 40px; }
-            #canvases { position: relative; width: 90%; height: 90%; margin: 20px auto; }
-            canvas { position: absolute; top: 0; left: 0 }
+            #canvases { position: relative; width: 85%; height: 90%; margin: 20px auto; float: left;}
+            #canvases canvas { position: absolute; top: 0; left: 0 }
             #bgCanvas { opacity: .4 }
+            #cell-formations { width: 14%; height: 90%; float: left; margin: 20px auto; }
+            #cell-formations canvas { margin: 10px; }
             #stats, input[type=button] { float: right; margin-right: 20px; }
             label { margin-left: 20px; }
         </style>
 
+        <script type="text/javascript">
+        	var gol = {};
+        </script>
+
         <script id="model" type="text/javascript">
-            function GolOptions() {
-                this.delay = 100;
-                this.paused = false;
-                this.cellSize = 20;
-            }
+        	gol.model = function() {
 
-            function Cell(x, y, isAlive) {
-                this.name = 'x' + x + 'y' + y;
-                this.x = x;
-                this.y = y;
-                this.isAlive = !!isAlive;
-                this.willLive = function(aliveNeighbours) {
-                    if (aliveNeighbours <= 1 || aliveNeighbours > 3) {
-                        return false;
-                    } 
+	            function GolOptions() {
+	                this.delay = 100;
+	                this.paused = false;
+	                this.cellSize = 20;
+	            }
 
-                    return this.isAlive || aliveNeighbours == 3;
-                };
-            }
+	            function GolCell(x, y, isAlive) {
+	                this.name = 'x' + x + 'y' + y;
+	                this.x = x;
+	                this.y = y;
+	                this.isAlive = !!isAlive;
+	                this.willLive = function(aliveNeighbours) {
+	                    if (aliveNeighbours <= 1 || aliveNeighbours > 3) {
+	                        return false;
+	                    } 
 
-            function BgCanvas(canvasElement) {
-                this.canvas = canvasElement;
+	                    return this.isAlive || aliveNeighbours == 3;
+	                };
+	            }
 
-                this.drawGrid = function(cellSize) {
-                    var $canvas = $(canvasElement);
-                    var context = $canvas[0].getContext("2d");
+	            function BgCanvas(canvasElement) {
+	                this.canvas = canvasElement;
 
-                    for (var a = 0; a <= Math.max($canvas.width(), $canvas.height()); a += parseInt(cellSize)) {
-                        context.moveTo(a, 0);
-                        context.lineTo(a, $canvas.height());
-                        context.moveTo(0, a);
-                        context.lineTo($canvas.width(), a);
-                    }
+	                this.drawGrid = function(cellSize) {
+	                    var $canvas = $(canvasElement);
+	                    var context = $canvas[0].getContext("2d");
 
-                    context.strokeStyle = "silver";
-                    context.stroke();
-                };
-            }
+	                    for (var a = 0; a <= Math.max($canvas.width(), $canvas.height()); a += parseInt(cellSize)) {
+	                        context.moveTo(a, 0);
+	                        context.lineTo(a, $canvas.height());
+	                        context.moveTo(0, a);
+	                        context.lineTo($canvas.width(), a);
+	                    }
+
+	                    context.strokeStyle = "silver";
+	                    context.stroke();
+	                };
+	            }
+
+	            function GolShape(name, structure) {
+	            	this.name = name;
+	            	this.structure = structure;
+	            	this.preview = function(cellSize) {
+	            		var cells = [];
+	            		var maxX = 0, maxY = 0;
+	            		for (var row = 0; row < this.structure.length; row++) {
+	            			var cols = this.structure[row].split('');
+	            			for (var col = 0; col < cols.length; col++) {
+	            				if (this.structure[row].substr(col, 1) == '.') {
+	            					cells.push(new gol.model.GolCell(col, row, true));
+		            			}
+		            			maxX++;
+	            			}
+	            			maxY++;
+	            		}
+
+	            		var $canvas = $('<canvas class="preview">').attr('width', cellSize * maxX).attr('height', cellSize * maxY);
+	            		var context = $canvas[0].getContext('2d');
+	            		for (var i = 0; i < cells.length; i++) {
+	            			gol.utils.renderCell(cells[i], cellSize, context);
+	            		}
+
+	            		return $canvas[0];
+	            	};
+	            }
+
+	            return {
+	            	GolOptions: GolOptions,
+	            	GolCell: GolCell,
+	            	GolShape: GolShape,
+	            	BgCanvas: BgCanvas
+	            }
+	        }();
+        </script>
+
+        <script id="structures" type="text/javascript">
+        	gol.structures = [
+        		new gol.model.GolShape('glider', ['...', '.', ' .']),
+        		new gol.model.GolShape('spaceship', ['.  .', '    .', '.   .', ' ....'])
+        	]
+        </script>
+
+        <script id="utils" type="text/javascript">
+        	gol.utils = function() {
+        		function renderCell(cell, cellSize, context) {
+					context.beginPath();
+                    if (cell.isAlive) {
+	                    context.arc((cell.x + 0.5) * cellSize, (cell.y + 0.5) * cellSize, cellSize / 2 - (cell.isAlive ? 1 : 0), 0, Math.PI * 2, true);
+	                } else {
+	                    context.rect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
+	                }
+                    context.fillStyle = cell.isAlive ? 'blue' : '#F0F0FF';
+                    context.fill();
+        		}
+
+        		return {
+        			renderCell: renderCell
+        		}
+        	}();
         </script>
 
         <script id="gol" type="text/javascript">
-            var options = new GolOptions();
+            var options = new gol.model.GolOptions();
             var frameCounter = 0;
 
             var rows = 0;
@@ -72,6 +141,7 @@
                 $('canvas').click(handleClick);
                 $('#clear').click(clear);
                 $('#random').click(function() { clear(); randomize(); render(); });
+                setupPremadeStructures();
 
                 setInterval(function() { $('#stats').text(frameCounter + "fps"); frameCounter = 0; }, 1000);
 
@@ -82,10 +152,10 @@
                 rows = Math.floor($('#canvases').height() / options.cellSize);
                 cols = Math.floor($('#canvases').width() / options.cellSize);
 
-                $('canvas').attr('width', options.cellSize * cols);
-                $('canvas').attr('height', options.cellSize * rows);
+                $('#canvases canvas').attr('width', options.cellSize * cols);
+                $('#canvases canvas').attr('height', options.cellSize * rows);
 
-                new BgCanvas('#bgCanvas').drawGrid(options.cellSize);
+                new gol.model.BgCanvas('#bgCanvas').drawGrid(options.cellSize);
             }
 
             function handleNewcellSize() {
@@ -132,7 +202,7 @@
                 for (var cellName in aliveNeighbourCount) {
                     var countElement = aliveNeighbourCount[cellName];
                     var existingCell = cells['x' + countElement.x + 'y' + countElement.y];
-                    var cell = existingCell || new Cell(countElement.x, countElement.y, false);
+                    var cell = existingCell || new gol.model.GolCell(countElement.x, countElement.y, false);
 
                     var willLive = cell.willLive(countElement.count);
                     if (willLive || cell.isAlive) {
@@ -151,7 +221,7 @@
 
             function setCellStatus(x, y, isAlive) {
                 var name = 'x' + x + 'y' + y;
-                cells[name] = cells[name] || new Cell(x, y, false);
+                cells[name] = cells[name] || new gol.model.GolCell(x, y, false);
                 cells[name].isAlive = (typeof isAlive === 'undefined') ? !cells[name].isAlive : isAlive;
 
                 generationChanges.push(cells[name]);
@@ -164,14 +234,7 @@
                     var $canvas = $('#golCanvas');
                     var context = $canvas[0].getContext("2d");
 
-                    context.beginPath();
-                    if (changedCell.isAlive) {
-	                    context.arc((changedCell.x + 0.5) * options.cellSize, (changedCell.y + 0.5) * options.cellSize, options.cellSize / 2 - (changedCell.isAlive ? 1 : 0), 0, Math.PI * 2, true);
-	                } else {
-	                    context.rect(changedCell.x * options.cellSize, changedCell.y * options.cellSize, options.cellSize, options.cellSize);
-	                }
-                    context.fillStyle = changedCell.isAlive ? 'blue' : '#F0F0FF';
-                    context.fill();
+                    gol.utils.renderCell(changedCell, options.cellSize, context);
                 }
             }
 
@@ -181,7 +244,7 @@
                 for (var col = 0; col < cols; col++) {
                     for (var row = 0; row < rows; row++) {
                         if (Math.random() * 10 < 1) {
-                            newCells['x' + col + 'y' + row] = new Cell(col, row, true);
+                            newCells['x' + col + 'y' + row] = new gol.model.GolCell(col, row, true);
                             newDiff.push(newCells['x' + col + 'y' + row]);
                         }
                     }
@@ -189,6 +252,12 @@
 
                 cells = newCells;
                 generationChanges = newDiff;
+            }
+
+            function setupPremadeStructures() {
+            	for (var i = 0; i < gol.structures.length; i++) {
+            		$('#cell-formations').append('<span>' + gol.structures[i].name + ':</span>').append(gol.structures[i].preview(options.cellSize));
+            	}
             }
 
             function clear() {
@@ -211,10 +280,14 @@
             <span id="stats"></span>
         </div>
 
-        <div id="canvases">
-            <canvas id="golCanvas" resize></canvas>
-            <canvas id="bgCanvas" resize></canvas>
-        </div>
+        <body>
+	        <div id="canvases">
+	            <canvas id="golCanvas" resize></canvas>
+	            <canvas id="bgCanvas" resize></canvas>
+	        </div>
+	        <div id="cell-formations">
+	        </div>
+        </body>
     </body>
 
 </html>
