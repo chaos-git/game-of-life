@@ -1,0 +1,215 @@
+<html>
+
+	<head>
+		<script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/knockout/3.2.0/knockout-min.js"></script>
+		<script type="text/javascript" src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+
+		<style>
+			input[type=text] { width: 40px; }
+			#canvases { position: relative; width: 90%; height: 90%; margin: 20px auto; }
+			canvas { position: absolute; top: 0; left: 0 }
+			#bgCanvas { opacity: .4 }
+		</style>
+
+		<script id="model" type="text/javascript">
+			function GolOptions() {
+				this.delay = 0;
+				this.paused = false;
+				this.cellWidth = 8;
+			}
+
+			function Cell(x, y, isAlive) {
+				this.name = 'x' + x + 'y' + y;
+				this.x = x;
+				this.y = y;
+				this.isAlive = !!isAlive;
+				this.willLive = function(aliveNeighbours) {
+					if (aliveNeighbours <= 1 || aliveNeighbours > 3) {
+						return false;
+					} 
+
+					return this.isAlive || aliveNeighbours == 3;
+				};
+			}
+
+			function BgCanvas(canvasElement) {
+				this.canvas = canvasElement;
+
+				this.drawGrid = function(cellWidth) {
+					var $canvas = $(canvasElement);
+    				var context = $canvas[0].getContext("2d");
+
+				    for (var a = 0; a <= Math.max($canvas.width(), $canvas.height()); a += parseInt(cellWidth)) {
+				        context.moveTo(a, 0);
+				        context.lineTo(a, $canvas.height());
+				        context.moveTo(0, a);
+				        context.lineTo($canvas.width(), a);
+				    }
+
+				    context.strokeStyle = "silver";
+				    context.stroke();
+				};
+			}
+		</script>
+
+		<script id="gol" type="text/javascript">
+			var options = new GolOptions();
+			var frameCounter = 0;
+
+			var rows = 0;
+			var cols = 0;
+
+			var cells = {};
+			var generationChanges = [];
+
+			function init() {
+				ko.applyBindings(options);
+
+				$(window).on('resize load', handleResize);
+				$('#cellWidth').on('change', handleNewCellWidth);
+				$('canvas').click(handleClick);
+				$('#clear').click(clear);
+				$('#random').click(function() { clear(); randomize(); render(); });
+
+				setInterval(function() { $('#fps').text(', actual: ' + frameCounter); frameCounter = 0; }, 1000);
+
+				processFrame();
+			}
+
+			function handleResize() {
+				rows = Math.floor($('#canvases').height() / options.cellWidth);
+				cols = Math.floor($('#canvases').width() / options.cellWidth);
+
+				$('canvas').attr('width', options.cellWidth * cols);
+				$('canvas').attr('height', options.cellWidth * rows);
+
+				new BgCanvas('#bgCanvas').drawGrid(options.cellWidth);
+			}
+
+			function handleNewCellWidth() {
+				handleResize();
+			}
+
+			function handleClick(e) {
+				var x = Math.floor((e.pageX - $(this).offset().left) / options.cellWidth);
+				var y = Math.floor((e.pageY - $(this).offset().top) / options.cellWidth);
+
+				setCellStatus(x, y);
+				render();
+			}
+
+			function processFrame() {
+				if (!options.paused) {
+					frameCounter++;
+					processGeneration();
+				}
+
+				render();
+				setTimeout(processFrame, options.delay);
+			}
+
+			function processGeneration() {
+				var aliveNeighbourCount = {};
+
+				for (var cellName in cells) {
+					var cell = cells[cellName];
+
+					aliveNeighbourCount[cell.name] = aliveNeighbourCount[cell.name] || { x: cell.x, y: cell.y, count: 0 };
+					if (cell.isAlive) {
+						for (var col = cell.x + (cell.x - 1 < 0 ? 0 : -1); col <= cell.x + 1 && col <= cols; col++) {
+							for (var row = cell.y + (cell.y - 1 < 0 ? 0 : -1); row <= cell.y + 1 && row <= rows; row++) {
+								if (cell.x != col || cell.y != row) {
+									aliveNeighbourCount['x' + col + 'y' + row] = aliveNeighbourCount['x' + col + 'y' + row] || { x: col, y: row, count: 0 };
+									aliveNeighbourCount['x' + col + 'y' + row].count++;
+								}
+							}
+						}
+					}
+				}
+
+				for (var cellName in aliveNeighbourCount) {
+					var countElement = aliveNeighbourCount[cellName];
+					var existingCell = cells['x' + countElement.x + 'y' + countElement.y];
+					var cell = existingCell || new Cell(countElement.x, countElement.y, false);
+
+					var willLive = cell.willLive(countElement.count);
+					if (willLive || cell.isAlive) {
+						var diff = cell.isAlive != willLive;
+						cell.isAlive = willLive;
+						cells[cell.name] = cell;
+						if (diff) {
+							generationChanges.push(cell);
+						}
+					} else if (existingCell) {
+						delete cells[cell.name];
+						generationChanges.push(cell);
+					} 
+				}
+			}
+
+			function setCellStatus(x, y, isAlive) {
+				var name = 'x' + x + 'y' + y;
+				cells[name] = cells[name] || new Cell(x, y, false);
+				cells[name].isAlive = (typeof isAlive === 'undefined') ? !cells[name].isAlive : isAlive;
+
+				generationChanges.push(cells[name]);
+			}
+
+			function render() {
+				while (generationChanges.length > 0) {
+					var changedCell = generationChanges.pop();
+
+					var $canvas = $('#golCanvas');
+    				var context = $canvas[0].getContext("2d");
+
+					context.beginPath();
+					context.arc(changedCell.x * options.cellWidth, changedCell.y * options.cellWidth, options.cellWidth / 2 - 1, 0, Math.PI * 2, true);
+					//context.rect(changedCell.x * options.cellWidth, changedCell.y * options.cellWidth, options.cellWidth, options.cellWidth);
+					context.fillStyle = changedCell.isAlive ? 'blue' : '#F0F0FF';
+					context.fill();
+				}
+			}
+
+			function randomize() {
+				var newCells = {};
+				var newDiff = [];
+				for (var col = 0; col < cols; col++) {
+					for (var row = 0; row < rows; row++) {
+						if (Math.random() * 10 < 1) {
+							newCells['x' + col + 'y' + row] = new Cell(col, row, true);
+							newDiff.push(newCells['x' + col + 'y' + row]);
+						}
+					}
+				}
+
+				cells = newCells;
+				generationChanges = newDiff;
+			}
+
+			function clear() {
+				cells = {}; 
+				var canvas = $('#golCanvas')[0];
+				canvas.getContext("2d").clearRect ( 0 , 0 , canvas.width, canvas.height );
+			}
+
+			$(init);
+		</script>
+	</head>
+
+	<body>
+		<div id="controls">
+			<input id="cellWidth" type="text" data-bind="value: cellWidth" />
+			<label for="paused">Pause:</label><input id="paused" type="checkbox" data-bind="checked: paused" />
+			<input type="button" id="random" value="random" />
+			<input type="button" id="clear" value="clear" />
+			<label for="delay">Delay:</label><input id="delay" type="text" data-bind="value: delay" />
+			<span id="fps"></span>
+		</div>
+
+		<div id="canvases">
+			<canvas id="golCanvas" resize></canvas>
+			<canvas id="bgCanvas" resize></canvas>
+		</div>
+	</body>
+
+</html>
