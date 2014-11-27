@@ -16,116 +16,118 @@
         </style>
 
         <script type="text/javascript">
-        	var gol = {};
+            var gol = {};
         </script>
 
         <script id="model" type="text/javascript">
-        	gol.model = function() {
+            gol.model = function() {
 
-	            function GolOptions() {
-	                this.delay = 100;
-	                this.paused = false;
-	                this.cellSize = 20;
-	            }
+                function GolOptions() {
+                    this.delay = 100;
+                    this.paused = false;
+                    this.cellSize = 20;
+                }
 
-	            function GolCell(x, y, isAlive) {
-	                this.name = 'x' + x + 'y' + y;
-	                this.x = x;
-	                this.y = y;
-	                this.isAlive = !!isAlive;
-	                this.willLive = function(aliveNeighbours) {
-	                    if (aliveNeighbours <= 1 || aliveNeighbours > 3) {
-	                        return false;
-	                    } 
+                function GolCell(x, y, isAlive) {
+                    this.name = 'x' + x + 'y' + y;
+                    this.x = x;
+                    this.y = y;
+                    this.isAlive = !!isAlive;
+                    this.willLive = function(aliveNeighbours) {
+                        if (aliveNeighbours <= 1 || aliveNeighbours > 3) {
+                            return false;
+                        } 
 
-	                    return this.isAlive || aliveNeighbours == 3;
-	                };
-	            }
+                        return this.isAlive || aliveNeighbours == 3;
+                    };
+                }
 
-	            function BgCanvas(canvasElement) {
-	                this.canvas = canvasElement;
+                function BgCanvas(canvasElement) {
+                    this.canvas = canvasElement;
 
-	                this.drawGrid = function(cellSize) {
-	                    var $canvas = $(canvasElement);
-	                    var context = $canvas[0].getContext("2d");
+                    this.drawGrid = function(cellSize) {
+                        var $canvas = $(canvasElement);
+                        var context = $canvas[0].getContext("2d");
 
-	                    for (var a = 0; a <= Math.max($canvas.width(), $canvas.height()); a += parseInt(cellSize)) {
-	                        context.moveTo(a, 0);
-	                        context.lineTo(a, $canvas.height());
-	                        context.moveTo(0, a);
-	                        context.lineTo($canvas.width(), a);
-	                    }
+                        for (var a = 0; a <= Math.max($canvas.width(), $canvas.height()); a += parseInt(cellSize)) {
+                            context.moveTo(a, 0);
+                            context.lineTo(a, $canvas.height());
+                            context.moveTo(0, a);
+                            context.lineTo($canvas.width(), a);
+                        }
 
-	                    context.strokeStyle = "silver";
-	                    context.stroke();
-	                };
-	            }
+                        context.strokeStyle = "silver";
+                        context.stroke();
+                    };
+                }
 
-	            function GolShape(name, structure) {
-	            	this.name = name;
-	            	this.structure = structure;
-	            	this.preview = function(cellSize) {
-	            		var cells = [];
-	            		var maxX = 0, maxY = 0;
-	            		for (var row = 0; row < this.structure.length; row++) {
-	            			var cols = this.structure[row].split('');
-	            			for (var col = 0; col < cols.length; col++) {
-	            				if (this.structure[row].substr(col, 1) == '.') {
-	            					cells.push(new gol.model.GolCell(col, row, true));
-		            			}
-		            			maxX++;
-	            			}
-	            			maxY++;
-	            		}
+                function GolShape(name, structure) {
+                    this.name = name;
+                    this.structure = structure;
+                    this.preview = function(cellSize) {
+                        var cells = [];
+                        var maxX = 0, maxY = 0;
+                        for (var row = 0; row < this.structure.length; row++) {
+                            var cols = this.structure[row].split('');
+                            for (var col = 0; col < cols.length; col++) {
+                                if (this.structure[row].substr(col, 1) == '.') {
+                                    cells.push(new gol.model.GolCell(col, row, true));
+                                }
+                                maxX++;
+                            }
+                            maxY++;
+                        }
 
-	            		var $canvas = $('<canvas class="preview">').attr('width', cellSize * maxX).attr('height', cellSize * maxY);
-	            		var context = $canvas[0].getContext('2d');
-	            		for (var i = 0; i < cells.length; i++) {
-	            			gol.utils.renderCell(cells[i], cellSize, context);
-	            		}
+                        var $canvas = $('<canvas class="preview">').attr('width', cellSize * maxX).attr('height', cellSize * maxY);
+                        var context = $canvas[0].getContext('2d');
+                        for (var i = 0; i < cells.length; i++) {
+                            gol.utils.renderCell(cells[i], cellSize, context);
+                        }
 
-	            		return $canvas[0];
-	            	};
-	            }
+                        return $canvas[0];
+                    };
+                }
 
-	            return {
-	            	GolOptions: GolOptions,
-	            	GolCell: GolCell,
-	            	GolShape: GolShape,
-	            	BgCanvas: BgCanvas
-	            }
-	        }();
+                return {
+                    GolOptions: GolOptions,
+                    GolCell: GolCell,
+                    GolShape: GolShape,
+                    BgCanvas: BgCanvas
+                }
+            }();
         </script>
 
         <script id="structures" type="text/javascript">
-        	gol.structures = [
-        		new gol.model.GolShape('glider', ['...', '.', ' .']),
-        		new gol.model.GolShape('spaceship', ['.  .', '    .', '.   .', ' ....'])
-        	]
+            gol.structures = [
+                new gol.model.GolShape('glider', ['...', '.', ' .']),
+                new gol.model.GolShape('spaceship', ['.  .', '    .', '.   .', ' ....']),
+                new gol.model.GolShape('acorn', [' .', '   .', '..  ...']),
+                new gol.model.GolShape('r-pentomino', [' ..', '..', ' .'])
+            ]
         </script>
 
         <script id="utils" type="text/javascript">
-        	gol.utils = function() {
-        		function renderCell(cell, cellSize, context) {
-					context.beginPath();
+            gol.utils = function() {
+                function renderCell(cell, cellSize, context) {
+                    context.beginPath();
                     if (cell.isAlive) {
-	                    context.arc((cell.x + 0.5) * cellSize, (cell.y + 0.5) * cellSize, cellSize / 2 - (cell.isAlive ? 1 : 0), 0, Math.PI * 2, true);
-	                } else {
-	                    context.rect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
-	                }
+                        context.arc((cell.x + 0.5) * cellSize, (cell.y + 0.5) * cellSize, cellSize / 2 - (cell.isAlive && cellSize >= 2 ? 1 : 0), 0, Math.PI * 2, true);
+                    } else {
+                        context.rect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
+                    }
                     context.fillStyle = cell.isAlive ? 'blue' : '#F0F0FF';
                     context.fill();
-        		}
+                }
 
-        		return {
-        			renderCell: renderCell
-        		}
-        	}();
+                return {
+                    renderCell: renderCell
+                }
+            }();
         </script>
 
         <script id="gol" type="text/javascript">
             var options = new gol.model.GolOptions();
-            var frameCounter = 0;
+            var generationCounter = 0;
 
             var rows = 0;
             var cols = 0;
@@ -142,8 +144,7 @@
                 $('#clear').click(clear);
                 $('#random').click(function() { clear(); randomize(); render(); });
                 setupPremadeStructures();
-
-                setInterval(function() { $('#stats').text(frameCounter + "fps"); frameCounter = 0; }, 1000);
+                setupStats();
 
                 processFrame();
             }
@@ -156,7 +157,7 @@
                 $('#canvases canvas').attr('height', options.cellSize * rows);
 
                 setupPremadeStructures();
-                
+
                 new gol.model.BgCanvas('#bgCanvas').drawGrid(options.cellSize);
             }
 
@@ -174,7 +175,7 @@
 
             function processFrame() {
                 if (!options.paused) {
-                    frameCounter++;
+                    generationCounter++;
                     processGeneration();
                 }
 
@@ -193,8 +194,8 @@
                         for (var col = cell.x - 1; col <= cell.x + 1; col++) {
                             for (var row = cell.y - 1; row <= cell.y + 1; row++) {
                                 if (cell.x != col || cell.y != row) {
-                                	var x = (col + cols) % cols;
-                                	var y = (row + rows) % rows;
+                                    var x = (col + cols) % cols;
+                                    var y = (row + rows) % rows;
 
                                     aliveNeighbourCount['x' + x + 'y' + y] = aliveNeighbourCount['x' + x + 'y' + y] || { x: x, y: y, count: 0 };
                                     aliveNeighbourCount['x' + x + 'y' + y].count++;
@@ -261,15 +262,56 @@
 
             function setupPremadeStructures() {
                 $('#cell-formations').empty();
-            	for (var i = 0; i < gol.structures.length; i++) {
-            		$('#cell-formations').append('<span>' + gol.structures[i].name + ':</span>').append(gol.structures[i].preview(options.cellSize));
-            	}
+                for (var i = 0; i < gol.structures.length; i++) {
+                    var $container = $('<div><span>' + gol.structures[i].name + '</span></span>')
+                    $('#cell-formations').append('<span>' + gol.structures[i].name + ':</span>').append(gol.structures[i].preview(options.cellSize));
+                }
             }
 
             function clear() {
                 cells = {}; 
+                generationCounter = 0;
                 var canvas = $('#golCanvas')[0];
                 canvas.getContext("2d").clearRect ( 0 , 0 , canvas.width, canvas.height );
+            }
+
+            function setupStats() {
+                var samplesPerSecond = 10;
+
+                var samples = [];
+                setInterval(function() { 
+                    var aliveCells = 0;
+                    for (var cellName in cells) {
+                        aliveCells += cells[cellName].isAlive ? 1 : 0;                        
+                    }
+
+                    samples.push({ cells: aliveCells, generations: generationCounter });
+
+                    var total = { cells: 0, generations: 0 }, stable = true;
+                    if (samples.length >= samplesPerSecond) {
+                        samples.shift();
+
+                        total.generations += samples[samples.length - 1].generations - samples[0].generations;
+                        for (var i = 0; i < samples.length; i++) {
+                            stable &= (i == 0 || samples[i].cells == samples[i - 1].cells);
+                        }
+
+                        if (stable) {
+                            stableGeneration = stableGeneration == 0 ? samples[0].generations : stableGeneration;
+                        } else {
+                            stableGeneration = 0;
+                        }
+                    }
+
+                    var statText = total.generations + 'fps';
+                    statText += ', ' + aliveCells + ' cells';
+                    statText += ', ' + generationCounter + ' generations';
+                    if (stableGeneration > 0) {
+                        statText += ' (stable at ' + stableGeneration + ')';
+                    }
+
+                    $('#stats').text(statText);  
+                }, 1000 / samplesPerSecond);
             }
 
             $(init);
@@ -287,12 +329,12 @@
         </div>
 
         <body>
-	        <div id="canvases">
-	            <canvas id="golCanvas" resize></canvas>
-	            <canvas id="bgCanvas" resize></canvas>
-	        </div>
-	        <div id="cell-formations">
-	        </div>
+            <div id="canvases">
+                <canvas id="golCanvas" resize></canvas>
+                <canvas id="bgCanvas" resize></canvas>
+            </div>
+            <div id="cell-formations">
+            </div>
         </body>
     </body>
 
