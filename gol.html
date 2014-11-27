@@ -270,7 +270,7 @@
                     var $container = $('<div class="cell-formation"><span>' + gol.structures[i].name + ':</span></div>')
                     $container.append(gol.structures[i].preview(options.cellSize));
                     $container.appendTo($('#cell-formations'));
-                    $container.find('canvas').draggable({ revert: function(event, ui) { return true } }).bind('dragstart', function(e) { e.preventDefault(); e.stopPropagation() });
+                    $container.find('canvas').draggable({ revert: function(event, ui) { return true }, scroll: false });
                 }
 
                 $('#golCanvas').droppable({ 
