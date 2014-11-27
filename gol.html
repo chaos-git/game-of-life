@@ -11,6 +11,8 @@
             #bgCanvas { opacity: .4 }
             #cell-formations { width: 14%; height: 90%; float: left; margin: 20px auto; }
             #cell-formations canvas { margin: 10px; }
+            .cell-formation { border-bottom: 1px solid silver;}
+            .cell-formation span { display: block; width: 100%;}
             #stats, input[type=button] { float: right; margin-right: 20px; }
             label { margin-left: 20px; }
         </style>
@@ -263,8 +265,9 @@
             function setupPremadeStructures() {
                 $('#cell-formations').empty();
                 for (var i = 0; i < gol.structures.length; i++) {
-                    var $container = $('<div><span>' + gol.structures[i].name + '</span></span>')
-                    $('#cell-formations').append('<span>' + gol.structures[i].name + ':</span>').append(gol.structures[i].preview(options.cellSize));
+                    var $container = $('<div class="cell-formation"><span>' + gol.structures[i].name + ':</span></div>')
+                    $container.append(gol.structures[i].preview(options.cellSize));
+                    $container.appendTo($('#cell-formations'));
                 }
             }
 
@@ -279,6 +282,7 @@
                 var samplesPerSecond = 10;
 
                 var samples = [];
+                var stableGeneration;
                 setInterval(function() { 
                     var aliveCells = 0;
                     for (var cellName in cells) {
@@ -307,7 +311,7 @@
                     statText += ', ' + aliveCells + ' cells';
                     statText += ', ' + generationCounter + ' generations';
                     if (stableGeneration > 0) {
-                        statText += ' (stable at ' + stableGeneration + ')';
+                        statText += ' (stable at ~' + stableGeneration + ')';
                     }
 
                     $('#stats').text(statText);  
