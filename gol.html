@@ -5,15 +5,15 @@
         <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
         <script type="text/javascript" src="https://code.jquery.com/ui/1.11.2/jquery-ui.min.js"></script>
 
-        <style>
+        <style>;}
             input[type=text] { width: 40px; }
-            #canvases { position: relative; width: 85%; height: 90%; margin: 20px auto; float: left;}
+            #canvases { position: relative; width: 80%; height: 90%; margin: 20px auto; float: left;}
             #canvases canvas { position: absolute; top: 0; left: 0 }
             #bgCanvas { opacity: .4 }
-            #cell-formations { width: 14%; height: 90%; float: left; margin: 20px auto; }
+            #cell-formations { width: 19%; height: 90%; float: left; margin: 20px auto; }
             #cell-formations canvas { margin: 10px; }
             .cell-formation { border-bottom: 1px solid silver;}
-            .cell-formation span { display: block; width: 100%;}
+            .cell-formation span { display: block; width: 100%; }
             #stats, input[type=button] { float: right; margin-right: 20px; }
             label { margin-left: 20px; }
         </style>
@@ -28,7 +28,7 @@
                 function GolOptions() {
                     this.delay = 100;
                     this.paused = false;
-                    this.cellSize = 15;
+                    this.cellSize = 10;
                 }
 
                 function GolCell(x, y, isAlive) {
@@ -71,12 +71,17 @@
                         var cells = [];
                         var maxX = 0, maxY = 0;
                         for (var row = 0; row < this.structure.length; row++) {
+                            var colPadding = 0;
                             var cols = this.structure[row].split('');
                             for (var col = 0; col < cols.length; col++) {
-                                if (this.structure[row].substr(col, 1) == '.') {
-                                    cells.push(new gol.model.GolCell(col, row, true));
-                                }
-                                maxX++;
+                                var character = this.structure[row].substr(col, 1);
+                                if (character == '.') {
+                                    cells.push(new gol.model.GolCell(col + colPadding, row, true));
+                                } 
+                                colPadding += (character == ' ' || character == '.' ? 0 : parseInt(character) - 1);
+                            }
+                            if (maxX < cols.length + colPadding) {
+                                maxX = cols.length + colPadding;
                             }
                             maxY++;
                         }
@@ -104,10 +109,15 @@
         <script id="structures" type="text/javascript">
             gol.structures = [
                 new gol.model.GolShape('glider', ['...', '.', ' .']),
-                new gol.model.GolShape('spaceship', ['.  .', '    .', '.   .', ' ....']),
-                new gol.model.GolShape('acorn', [' .', '   .', '..  ...']),
+                new gol.model.GolShape('gliders by the dozen', ['..2.', '.3.', '.2..']),
+                new gol.model.GolShape('spaceship', [' .2.', '.', '.3.', '....']),
+                new gol.model.GolShape('thunderbird', ['...', '', ' .', ' .', ' .']),
+                new gol.model.GolShape('acorn', [' .', '3.', '..2...']),
                 new gol.model.GolShape('r-pentomino', [' ..', '..', ' .']),
-                new gol.model.GolShape('puffer 2', [' ...           ...', '.  .          .  .', '   .    ...      .', '   .    .  .     .', '  .    .        .'])
+                new gol.model.GolShape('multum in parvo', ['3...', '2.2.', ' .', '.']),
+                new gol.model.GolShape('puffer 2', [' ...92...', '.2.9 .2.', '3.4...6.', '3.4.2.5.', '2.4.8.']),
+                new gol.model.GolShape('pufferfish', ['3.7.', '2...5...', ' ..2.3.2..', '3...3...', '', '4.5.', '2.2.3.2.', '.5. .5.', '..4. .4..', '6. .', '3. .3. .', '4.5.']),
+                new gol.model.GolShape('gosper glider gun', ['996.', '994. .', '93..6..66..', '92.3.4..66..', '..8.5.3..', '..8.3. ..4. .', '9 .5.7.', '92.3.', '93..'])
             ]
         </script>
 
