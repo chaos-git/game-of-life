@@ -155,6 +155,8 @@
                 $('#canvases canvas').attr('width', options.cellSize * cols);
                 $('#canvases canvas').attr('height', options.cellSize * rows);
 
+                setupPremadeStructures();
+                
                 new gol.model.BgCanvas('#bgCanvas').drawGrid(options.cellSize);
             }
 
@@ -258,6 +260,7 @@
             }
 
             function setupPremadeStructures() {
+                $('#cell-formations').empty();
             	for (var i = 0; i < gol.structures.length; i++) {
             		$('#cell-formations').append('<span>' + gol.structures[i].name + ':</span>').append(gol.structures[i].preview(options.cellSize));
             	}
