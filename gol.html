@@ -3,6 +3,7 @@
     <head>
         <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/knockout/3.2.0/knockout-min.js"></script>
         <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+        <script type="text/javascript" src="https://code.jquery.com/ui/1.11.2/jquery-ui.min.js"></script>
 
         <style>
             input[type=text] { width: 40px; }
@@ -81,6 +82,7 @@
                         }
 
                         var $canvas = $('<canvas class="preview">').attr('width', cellSize * maxX).attr('height', cellSize * maxY);
+                        $canvas.data('cells', cells);
                         var context = $canvas[0].getContext('2d');
                         for (var i = 0; i < cells.length; i++) {
                             gol.utils.renderCell(cells[i], cellSize, context);
@@ -268,7 +270,24 @@
                     var $container = $('<div class="cell-formation"><span>' + gol.structures[i].name + ':</span></div>')
                     $container.append(gol.structures[i].preview(options.cellSize));
                     $container.appendTo($('#cell-formations'));
+                    $container.find('canvas').draggable({ revert: function(event, ui) { return true } });
                 }
+
+                $('#golCanvas').droppable({ 
+                    drop: function(event, ui) {
+                        var x = Math.floor(ui.offset.left / options.cellSize);
+                        var y = Math.floor(ui.offset.top / options.cellSize);
+
+                        var structureCells = ui.draggable.data('cells');
+                        for (var i = 0; i < structureCells.length; i++) {
+                            var cell = new gol.model.GolCell(x + structureCells[i].x, y + structureCells[i].y, true);
+                            cells[cell.name] = cell;
+                            generationChanges.push(cell);
+                        }
+
+                        render();
+                    }
+                });
             }
 
             function clear() {
